@@ -27,6 +27,7 @@ export const CAR_PARAMS = {
   probeUp: 1.2,
   snap: 0.8,
   loopMinSpeed: 11,    // darunter fällt man kopfüber von der Bahn
+  takeoffEps: 0.003,   // Toleranz, bevor das Auto über eine Kuppe abhebt (m pro Schritt)
   halfWidth: 1.15,
   halfLength: 2.3,
 };
@@ -69,7 +70,7 @@ export class CarPhysics {
     return out.crossVectors(this.fwd, this.up).normalize();
   }
 
-  findGround(world) {
+  findGround(world, dt) {
     const P = this.p;
     if (this.grounded) {
       const origin = v1.copy(this.pos).addScaledVector(this.up, P.probeUp);
@@ -77,7 +78,8 @@ export class CarPhysics {
     }
     // In der Luft: senkrecht nach unten, Reichweite abhängig von der Fallgeschwindigkeit
     const origin = v1.copy(this.pos).addScaledVector(WORLD_UP, P.probeUp);
-    const reach = P.probeUp + Math.max(0.25, -this.vel.y / 60);
+    // Nur landen, wenn die Fahrbahn innerhalb dieses Schritts erreicht wird
+    const reach = P.probeUp + Math.max(0.03, -this.vel.y * dt * 1.5);
     const hit = world.cast(origin, v2.set(0, -1, 0), reach, 'road');
     if (hit && hit.normal.y > 0.3 && this.vel.y <= 1) return hit;
     return null;
@@ -90,7 +92,15 @@ export class CarPhysics {
     this.steer += (steerTarget - this.steer) * Math.min(1, dt * 12);
 
     const wasGrounded = this.grounded;
-    const hit = this.findGround(world);
+    let hit = this.findGround(world, dt);
+    // Abheben: Fällt die Fahrbahn schneller weg, als die Schwerkraft das Auto
+    // in diesem Schritt nachziehen kann (Kuppe bei hohem Tempo), fliegt es.
+    // Loopings und Steilkurven haften (auch beim Übergang auf/von ihnen)
+    if (hit && wasGrounded && !hit.data.sticky && !this.surface?.sticky) {
+      const gap = hit.distance - P.probeUp;
+      const pull = 0.5 * P.gravity * Math.max(0, this.up.y) * dt * dt;
+      if (gap > pull + P.takeoffEps) hit = null;
+    }
     this.grounded = !!hit;
 
     if (this.grounded) {

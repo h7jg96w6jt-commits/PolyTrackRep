@@ -34,7 +34,7 @@ export const TRACKS = [
     name: 'Schanzenfieber',
     difficulty: 2,
     walls: 'curves',
-    code: 'B S2 T S2 J S2 C S r S T S J S3 E S C S T S2 J S U S2 R S2 C S D S l T S J S2 F',
+    code: 'B S2 T S2 J S2 C S r S T S J S3 E S C S T S2 J S2 U S2 R S2 C S D S l T S J S2 F',
     medals: { gold: 22.5, silver: 25.5, bronze: 31 },
     theme: { kerbA: '#16a34a', kerbB: '#fef3c7', boost: '#f472b6' },
     env: { skyTop: '#f59e0b', skyBottom: '#fde68a', fog: '#fbe3b0', sea: '#b45309', island: '#a3a35a', sun: '#ffd28a', sunIntensity: 2.0 },

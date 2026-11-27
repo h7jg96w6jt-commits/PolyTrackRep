@@ -140,7 +140,7 @@ export class Track {
         const road = new THREE.Mesh(geo.road, roadMat);
         road.castShadow = true;
         road.receiveShadow = true;
-        road.userData = { type: p.type, boost: p.type === 'boost', piece: p.index };
+        road.userData = { type: p.type, boost: p.type === 'boost', sticky: !!strip.sticky, piece: p.index };
         g.add(road);
         meshes.road.push(road);
         if (geo.wall) {

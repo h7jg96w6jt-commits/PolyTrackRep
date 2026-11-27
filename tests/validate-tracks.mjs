@@ -10,11 +10,11 @@ for (const t of TRACKS) {
   ids.add(t.id);
   const cps = pieces.filter((p) => p.type === 'checkpoint').length;
   if (cps < 1) errors.push('Mindestens ein Checkpoint nötig');
-  // Nach einem Sprung mindestens zwei gerade Bausteine als Auslauf
+  // Nach einem Sprung mindestens zwei flache gerade Bausteine (keine Rampe) als Auslauf
   pieces.forEach((p, i) => {
     if (p.code !== 'J') return;
     const next = pieces.slice(i + 1, i + 3).map((q) => q.code);
-    if (next.length < 2 || next.some((c) => !'SCTUDF'.includes(c))) errors.push(`Sprung ${i}: zu wenig Auslauf (${next.join('')})`);
+    if (next.length < 2 || next.some((c) => !'SCTF'.includes(c))) errors.push(`Sprung ${i}: zu wenig Auslauf (${next.join('')})`);
   });
   const m = t.medals;
   if (!(m && m.gold < m.silver && m.silver < m.bronze)) errors.push('Medaillenzeiten ungültig');

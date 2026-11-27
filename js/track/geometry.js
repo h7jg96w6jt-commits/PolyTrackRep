@@ -98,11 +98,11 @@ export function stripsFor(type) {
     case 'right': return [{ ...arc(H, 'right'), walls: true, curveWalls: true }];
     case 'wideLeft': return [{ ...arc(TILE * 1.5, 'left'), walls: true, curveWalls: true }];
     case 'wideRight': return [{ ...arc(TILE * 1.5, 'right'), walls: true, curveWalls: true }];
-    case 'bankLeft': return [{ ...arc(TILE * 1.5, 'left', BANK_ANGLE), walls: true, curveWalls: true, bank: true }];
-    case 'bankRight': return [{ ...arc(TILE * 1.5, 'right', BANK_ANGLE), walls: true, curveWalls: true, bank: true }];
+    case 'bankLeft': return [{ ...arc(TILE * 1.5, 'left', BANK_ANGLE), walls: true, curveWalls: true, bank: true, sticky: true }];
+    case 'bankRight': return [{ ...arc(TILE * 1.5, 'right', BANK_ANGLE), walls: true, curveWalls: true, bank: true, sticky: true }];
     case 'up': return [{ ...ramp(1), walls: true }];
     case 'down': return [{ ...ramp(-1), walls: true }];
-    case 'loop': return [{ ...loop(), walls: false }];
+    case 'loop': return [{ ...loop(), walls: false, sticky: true }];
     case 'jump': return [{ ...jumpKicker(), walls: false, kicker: true }, { ...jumpLanding(), walls: false }];
     default: return [{ ...straight(), walls: true }];
   }
