@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#9fd8f5">
+  <meta name="theme-color" content="#0f172a">
   <title>JGTrack</title>
   <link rel="stylesheet" href="css/style.css">
   <script type="importmap">
@@ -14,38 +14,75 @@
 <body>
   <canvas id="game"></canvas>
 
-  <div id="hud">
-    <div class="panel top-left">
-      <div id="track-name" class="label"></div>
-      <div id="time" class="time">00:00.000</div>
-      <div id="best" class="label">Best --:--.---</div>
+  <!-- HUD -->
+  <div id="hud" hidden>
+    <div class="hud-time panel">
+      <div id="hud-track" class="label"></div>
+      <div id="hud-timer" class="time">00:00.000</div>
+      <div id="hud-best" class="label">Best --:--.---</div>
     </div>
-    <div class="panel top-center"><span id="cp">CP 0/0</span></div>
-    <div class="top-right">
+    <div id="hud-cp" class="hud-cp panel">CP 0/0</div>
+    <div class="hud-buttons">
+      <button class="icon-btn" data-action="mute" title="Ton (M)" id="btn-mute">🔊</button>
       <button class="icon-btn" data-action="reset" title="Zum Checkpoint (R)">↺</button>
       <button class="icon-btn" data-action="restart" title="Neustart (Enter)">⟲</button>
+      <button class="icon-btn" data-action="pause" title="Pause (Esc)">❚❚</button>
     </div>
-    <div id="speed" class="panel speed">0 km/h</div>
-    <div id="hint" class="hint">Gas geben zum Starten<br><small>W/↑ Gas · S/↓ Bremse · A/D Lenken · R Checkpoint · Enter Neustart</small></div>
+    <div class="hud-speed panel">
+      <div id="hud-speed" class="speed-num">0</div>
+      <div class="label">km/h</div>
+      <div class="speed-bar"><div id="hud-speed-bar"></div></div>
+    </div>
+    <div id="toast" class="toast"></div>
+    <div id="countdown" class="countdown"></div>
   </div>
 
-  <div id="touch">
+  <!-- Touch-Steuerung -->
+  <div id="touch" hidden>
     <div class="touch-left">
       <button class="touch-btn" data-action="left">◀</button>
       <button class="touch-btn" data-action="right">▶</button>
     </div>
     <div class="touch-right">
+      <button class="touch-btn small drift" data-action="drift">DRIFT</button>
       <button class="touch-btn brake" data-action="brake">▼</button>
       <button class="touch-btn gas" data-action="throttle">▲</button>
     </div>
   </div>
 
-  <div id="finish" class="overlay" hidden>
+  <!-- Hauptmenü -->
+  <div id="menu" class="screen">
+    <div class="menu-inner">
+      <h1 class="logo">JG<span>TRACK</span></h1>
+      <p class="tagline">Zeitrennen über den Wolken</p>
+      <div id="track-list" class="track-list"></div>
+      <p class="keys">W/↑ Gas · S/↓ Bremse · A/D Lenken · Leertaste Drift · R Checkpoint · Enter Neustart · Esc Pause · M Ton</p>
+    </div>
+  </div>
+
+  <!-- Pause -->
+  <div id="pause" class="screen dim" hidden>
     <div class="card">
-      <div class="label">Ziel!</div>
-      <div id="finish-time" class="time big"></div>
-      <div id="finish-note" class="label"></div>
-      <button id="again" class="primary">Nochmal (Enter)</button>
+      <h2>Pause</h2>
+      <button class="primary" id="btn-resume">Weiter</button>
+      <button class="secondary" id="btn-restart">Neustart</button>
+      <button class="secondary" id="btn-menu">Streckenauswahl</button>
+    </div>
+  </div>
+
+  <!-- Ziel -->
+  <div id="finish" class="screen dim" hidden>
+    <div class="card finish-card">
+      <div class="label">Ziel – <span id="fin-track"></span></div>
+      <div id="fin-time" class="time big"></div>
+      <div id="fin-note" class="fin-note"></div>
+      <div id="fin-medal" class="medal-row"></div>
+      <ol id="fin-board" class="board"></ol>
+      <div class="row">
+        <button class="primary" id="btn-again">Nochmal (Enter)</button>
+        <button class="secondary" id="btn-next">Nächste Strecke</button>
+        <button class="secondary" id="btn-menu2">Menü</button>
+      </div>
     </div>
   </div>
 
