@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#9fd8f5">
+  <title>JGTrack</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <div class="panel top-left">
+      <div id="track-name" class="label"></div>
+      <div id="time" class="time">00:00.000</div>
+      <div id="best" class="label">Best --:--.---</div>
+    </div>
+    <div class="panel top-center"><span id="cp">CP 0/0</span></div>
+    <div class="top-right">
+      <button class="icon-btn" data-action="reset" title="Zum Checkpoint (R)">↺</button>
+      <button class="icon-btn" data-action="restart" title="Neustart (Enter)">⟲</button>
+    </div>
+    <div id="speed" class="panel speed">0 km/h</div>
+    <div id="hint" class="hint">Gas geben zum Starten<br><small>W/↑ Gas · S/↓ Bremse · A/D Lenken · R Checkpoint · Enter Neustart</small></div>
+  </div>
+
+  <div id="touch">
+    <div class="touch-left">
+      <button class="touch-btn" data-action="left">◀</button>
+      <button class="touch-btn" data-action="right">▶</button>
+    </div>
+    <div class="touch-right">
+      <button class="touch-btn brake" data-action="brake">▼</button>
+      <button class="touch-btn gas" data-action="throttle">▲</button>
+    </div>
+  </div>
+
+  <div id="finish" class="overlay" hidden>
+    <div class="card">
+      <div class="label">Ziel!</div>
+      <div id="finish-time" class="time big"></div>
+      <div id="finish-note" class="label"></div>
+      <button id="again" class="primary">Nochmal (Enter)</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
