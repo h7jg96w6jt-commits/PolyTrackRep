@@ -89,6 +89,7 @@ export class Game {
   }
 
   restart() {
+    document.activeElement?.blur?.();
     this.state = 'countdown';
     this.countdownT = 0;
     this.countdownBeat = -1;

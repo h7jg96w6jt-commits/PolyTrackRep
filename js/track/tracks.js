@@ -32,7 +32,7 @@ export const TRACKS = [
   {
     id: 'schanzenfieber',
     name: 'Schanzenfieber',
-    difficulty: 3,
+    difficulty: 2,
     walls: 'curves',
     code: 'B S2 T S2 J S2 C S r S T S J S3 E S C S T S2 J S U S2 R S2 C S D S l T S J S2 F',
     medals: { gold: 22.5, silver: 25.5, bronze: 31 },
@@ -42,12 +42,22 @@ export const TRACKS = [
   {
     id: 'looping-lagune',
     name: 'Looping-Lagune',
-    difficulty: 4,
+    difficulty: 3,
     walls: 'none',
     code: 'B S T S2 O S2 C S Q S T S2 J S2 E S C T S O S U S2 R S2 C S D T S2 O S r S F',
     medals: { gold: 29.6, silver: 33.5, bronze: 40 },
     theme: { kerbA: '#06b6d4', kerbB: '#f8fafc', road: '#334155', checkpoint: '#f43f5e' },
     env: { skyTop: '#22a6b3', skyBottom: '#c8fff4', fog: '#bdf3e8', sea: '#1596a8', island: '#4ade80', sun: '#f0fff4' },
+  },
+  {
+    id: 'gewittergrat',
+    name: 'Gewittergrat',
+    difficulty: 4,
+    walls: 'none',
+    code: 'B S T S2 J S3 R S C S L T S O S2 E S U S2 R S D S C T S J S3 Q S C S L S R T S O S r S F',
+    medals: { gold: 34, silver: 38.5, bronze: 46 },
+    theme: { kerbA: '#facc15', kerbB: '#1f2937', road: '#2b2f3a', boost: '#a78bfa', checkpoint: '#f97316', wall: '#94a3b8' },
+    env: { skyTop: '#334155', skyBottom: '#94a3b8', fog: '#8796ab', sea: '#1e3a5f', island: '#4b6b4f', rock: '#6b7280', cloud: '#cbd5e1', sun: '#e2e8f0', sunIntensity: 1.6 },
   },
 ];
 

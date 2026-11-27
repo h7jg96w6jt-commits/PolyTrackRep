@@ -26,6 +26,8 @@ export class Input {
     this.override = null; // z. B. Autopilot
 
     window.addEventListener('keydown', (e) => {
+      // Fokussierte Buttons (Menü) behalten Enter/Leertaste
+      if (e.target?.tagName === 'BUTTON' && (e.code === 'Enter' || e.code === 'Space')) return;
       const a = KEY_ACTIONS[e.code];
       if (a) {
         this.keys[a] = true;
@@ -53,7 +55,7 @@ export class Input {
       el.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        el.setPointerCapture?.(e.pointerId);
+        try { el.setPointerCapture(e.pointerId); } catch { /* synthetische Events */ }
         el.classList.add('pressed');
         if (action in this.touch) {
           this.pointerActions.set(e.pointerId, action);

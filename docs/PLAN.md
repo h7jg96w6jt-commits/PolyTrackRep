@@ -24,9 +24,15 @@
 
 ## Meilensteine
 1. **Prototyp** – Szene, Strecke, Auto, Kamera, Timer, Neustart, Reset bei Absturz. ✅
-2. **Rennen** – Checkpoints, Countdown, Zielerkennung, Bestzeiten, 3D-Physik mit Drift.
-3. **Streckenelemente** – Rampen, Sprünge, Steilkurven, Loopings, Wände, komplexere Layouts.
-4. **Politur** – Sound, Partikel, Kamera (FOV/Shake), Pause-Menü, UI, Performance.
-5. **Inhalt** – mehrere Strecken, Auswahlmenü, lokale Bestenliste, Medaillen, Freischalten.
+2. **Rennen** – Checkpoints, Countdown, Zielerkennung, Bestzeiten, 3D-Physik mit Drift. ✅
+3. **Streckenelemente** – Rampen, Sprünge, Steilkurven, Loopings, Wände, komplexere Layouts. ✅
+4. **Politur** – Sound, Partikel, Kamera (FOV/Shake/Kollision), Pause-Menü, UI, Performance. ✅
+5. **Inhalt** – 5 Strecken, Auswahlmenü, lokale Top-5, Medaillen, Freischalten. ✅
+6. **Später** – Ghost der Bestzeit (Physik ist deterministisch → Eingaben aufzeichnen), Streckeneditor, Strecken teilen per Code.
 
 Jeder Meilenstein wird mit einem Autopiloten im Headless-Browser durchgefahren (`tests/`).
+
+## Messwerte (Headless, SwiftShader)
+- 80–130 Draw-Calls, ~17–21k Dreiecke pro Strecke
+- Physik ~0,03–0,06 ms pro Schritt (120 Schritte/s)
+- Autopilot-Zeiten = Grundlage der Goldzeiten (mit Drift schlagbar)
