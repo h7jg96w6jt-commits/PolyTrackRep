@@ -18,15 +18,22 @@ export class Autopilot {
     this.i = best;
   }
 
-  controls(car) {
+  // Nächsten Pfadpunkt vorwärts suchen; liefert zurückgelegte Strecke (m)
+  follow(pos) {
     const path = this.path;
     const end = Math.min(path.length, this.i + 30);
     let best = this.i, bd = Infinity;
     for (let k = this.i; k < end; k++) {
-      const d = path[k].pos.distanceToSquared(car.pos);
+      const d = path[k].pos.distanceToSquared(pos);
       if (d < bd) { bd = d; best = k; }
     }
     this.i = best;
+    return path[best].dist ?? 0;
+  }
+
+  controls(car) {
+    const path = this.path;
+    this.follow(car.pos);
 
     const speed = Math.max(0, car.speed);
     const look = Math.min(path.length - 1, this.i + Math.round(4 + speed * 0.12));

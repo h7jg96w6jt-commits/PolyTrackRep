@@ -1,4 +1,5 @@
-import { DIFFICULTY } from '../track/tracks.js';
+import { DIFFICULTY, KINDS } from '../track/tracks.js';
+import { trackLength } from '../track/layout.js';
 import { medalFor } from '../game/records.js';
 
 export function formatTime(sec) {
@@ -6,6 +7,10 @@ export function formatTime(sec) {
   const m = Math.floor(sec / 60);
   const s = sec - m * 60;
   return `${String(m).padStart(2, '0')}:${s.toFixed(3).padStart(6, '0')}`;
+}
+
+export function formatKm(m) {
+  return `${(m / 1000).toFixed(1).replace('.', ',')} km`;
 }
 
 export function formatDelta(d) {
@@ -22,6 +27,7 @@ export class UI {
       hud: $('hud'), touch: $('touch'), menu: $('menu'), pause: $('pause'), finish: $('finish'),
       track: $('hud-track'), timer: $('hud-timer'), best: $('hud-best'), cp: $('hud-cp'),
       speed: $('hud-speed'), speedBar: $('hud-speed-bar'), toast: $('toast'), countdown: $('countdown'),
+      dist: $('hud-dist'), distBar: $('hud-dist-bar'),
       list: $('track-list'), mute: $('btn-mute'),
       finTrack: $('fin-track'), finTime: $('fin-time'), finNote: $('fin-note'), finMedal: $('fin-medal'), finBoard: $('fin-board'),
       next: $('btn-next'),
@@ -34,7 +40,16 @@ export class UI {
   showMenu(tracks, records, isUnlocked, onSelect) {
     const list = this.el.list;
     list.innerHTML = '';
+    let lastKind = null;
     tracks.forEach((t, i) => {
+      const kind = t.kind ?? 'sprint';
+      if (kind !== lastKind) {
+        const h = document.createElement('h3');
+        h.className = 'kind';
+        h.textContent = KINDS[kind] ?? kind;
+        list.appendChild(h);
+        lastKind = kind;
+      }
       const best = records.best(t.id);
       const medal = medalFor(best?.time, t.medals);
       const unlocked = isUnlocked(i);
@@ -42,7 +57,7 @@ export class UI {
       btn.className = 'track-card';
       btn.disabled = !unlocked;
       btn.innerHTML = `
-        <div class="diff">${'●'.repeat(t.difficulty)}${'○'.repeat(4 - t.difficulty)} ${DIFFICULTY[t.difficulty]}</div>
+        <div class="diff">${'●'.repeat(t.difficulty)}${'○'.repeat(4 - t.difficulty)} ${DIFFICULTY[t.difficulty]} · ${formatKm(trackLength(t.code))}</div>
         <div class="name"></div>
         <div class="best">${unlocked ? (best ? formatTime(best.time) : 'Noch keine Zeit') : '🔒 Gesperrt'}</div>
         <div class="meta">${unlocked ? (medal ? `Medaille: ${MEDAL_NAMES[medal]}` : `Gold: ${formatTime(t.medals.gold)}`) : 'Vorherige Strecke beenden'}</div>`;
@@ -68,7 +83,12 @@ export class UI {
   }
 
   // ---------- HUD ----------
-  hud({ time, best, cp, cpTotal, speed, maxSpeed }) {
+  hud({ time, best, cp, cpTotal, speed, maxSpeed, dist = 0, length = 1 }) {
+    const d = `${formatKm(dist)} / ${formatKm(length)}`;
+    if (d !== this.last.d) {
+      this.el.dist.textContent = this.last.d = d;
+      this.el.distBar.style.width = `${Math.min(100, (dist / length) * 100)}%`;
+    }
     const t = formatTime(time);
     if (t !== this.last.t) this.el.timer.textContent = this.last.t = t;
     const b = `Best ${formatTime(best)}`;

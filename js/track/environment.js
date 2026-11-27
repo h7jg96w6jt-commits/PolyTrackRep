@@ -28,12 +28,21 @@ export class Environment {
     this.addLights();
 
     const b = track.bounds;
-    const center = b.getCenter(new THREE.Vector3());
-    const size = b.getSize(new THREE.Vector3());
-    const radius = Math.max(size.x, size.z) / 2 + 60;
     const rnd = rng(track.def.code.length * 7919 + 17);
-    this.addIslands(center, radius, rnd);
-    this.addClouds(center, radius, rnd);
+    // Fläche um die Strecke (mit Rand), Anzahl skaliert mit der Fläche
+    const area = { minX: b.min.x - 350, maxX: b.max.x + 350, minZ: b.min.z - 350, maxZ: b.max.z + 350 };
+    const size = (area.maxX - area.minX) * (area.maxZ - area.minZ);
+    // Prüft, ob ein Kreis die Fahrbahn berührt (über die Zellen der Strecke)
+    const TILE = 20;
+    this.clear = (x, z, r) => {
+      const c0x = Math.floor((x - r) / TILE), c1x = Math.ceil((x + r) / TILE);
+      const c0z = Math.floor((z - r) / TILE), c1z = Math.ceil((z + r) / TILE);
+      for (let cx = c0x; cx <= c1x; cx++)
+        for (let cz = c0z; cz <= c1z; cz++) if (track.cellMap.has(`${cx},${cz}`)) return false;
+      return true;
+    };
+    this.addIslands(area, Math.round(Math.min(160, Math.max(26, size / 70000))), rnd);
+    this.addClouds(area, Math.round(Math.min(140, Math.max(40, size / 50000))), rnd);
 
     scene.add(this.group);
   }
@@ -85,53 +94,61 @@ export class Environment {
     this.group.add(this.hemi, this.sun, this.sun.target);
   }
 
-  addIslands(center, radius, rnd) {
-    const islandMat = this.track(new THREE.MeshStandardMaterial({ color: this.t.island, flatShading: true, roughness: 1 }));
-    const rockMat = this.track(new THREE.MeshStandardMaterial({ color: this.t.rock, flatShading: true, roughness: 1 }));
-    const treeMat = this.track(new THREE.MeshStandardMaterial({ color: '#2f8f5b', flatShading: true }));
-    const islandGeo = this.track(new THREE.CylinderGeometry(1, 1.25, 1, 7));
-    const peakGeo = this.track(new THREE.ConeGeometry(1, 1, 6));
-    const treeGeo = this.track(new THREE.ConeGeometry(1.8, 5, 6));
-
-    const count = 26;
-    for (let i = 0; i < count; i++) {
-      const a = rnd() * Math.PI * 2;
-      const d = radius * (0.9 + rnd() * 1.6);
-      const x = center.x + Math.cos(a) * d, z = center.z + Math.sin(a) * d;
+  addIslands(area, count, rnd) {
+    const mats = {
+      island: this.track(new THREE.MeshStandardMaterial({ color: this.t.island, flatShading: true, roughness: 1 })),
+      rock: this.track(new THREE.MeshStandardMaterial({ color: this.t.rock, flatShading: true, roughness: 1 })),
+      tree: this.track(new THREE.MeshStandardMaterial({ color: '#2f8f5b', flatShading: true })),
+    };
+    const geos = {
+      island: this.track(new THREE.CylinderGeometry(1, 1.25, 1, 7)),
+      rock: this.track(new THREE.ConeGeometry(1, 1, 6)),
+      tree: this.track(new THREE.ConeGeometry(1.8, 5, 6)),
+    };
+    const items = { island: [], rock: [], tree: [] };
+    for (let i = 0, tries = 0; i < count && tries < count * 6; tries++) {
+      const x = area.minX + rnd() * (area.maxX - area.minX);
+      const z = area.minZ + rnd() * (area.maxZ - area.minZ);
       const r = 14 + rnd() * 40;
-      const isl = new THREE.Mesh(islandGeo, islandMat);
-      isl.scale.set(r, 4 + rnd() * 6, r);
-      isl.position.set(x, SEA_LEVEL + 1, z);
-      isl.rotation.y = rnd() * 6;
-      isl.receiveShadow = true;
-      this.group.add(isl);
-      if (rnd() < 0.6) {
-        const peak = new THREE.Mesh(peakGeo, rockMat);
+      const peak = rnd() < 0.55;
+      // Berge dürfen die Fahrbahn nicht durchstoßen, flache Inseln liegen tief genug
+      if (peak && !this.clear(x, z, r * 0.8 + 10)) continue;
+      i++;
+      items.island.push({ x, y: SEA_LEVEL + 1, z, sx: r, sy: 4 + rnd() * 6, sz: r, ry: rnd() * 6 });
+      if (peak) {
         const h = 20 + rnd() * 70;
-        peak.scale.set(r * 0.7, h, r * 0.7);
-        peak.position.set(x, SEA_LEVEL + 4 + h / 2, z);
-        peak.rotation.y = rnd() * 6;
-        this.group.add(peak);
+        items.rock.push({ x, y: SEA_LEVEL + 4 + h / 2, z, sx: r * 0.7, sy: h, sz: r * 0.7, ry: rnd() * 6 });
       } else {
         for (let k = 0; k < 6; k++) {
-          const tr = new THREE.Mesh(treeGeo, treeMat);
           const ta = rnd() * Math.PI * 2, td = rnd() * r * 0.7;
-          tr.position.set(x + Math.cos(ta) * td, SEA_LEVEL + 7, z + Math.sin(ta) * td);
-          this.group.add(tr);
+          items.tree.push({ x: x + Math.cos(ta) * td, y: SEA_LEVEL + 7, z: z + Math.sin(ta) * td, sx: 1, sy: 1, sz: 1, ry: 0 });
         }
       }
     }
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), v = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    for (const k of Object.keys(items)) {
+      if (!items[k].length) continue;
+      const im = new THREE.InstancedMesh(geos[k], mats[k], items[k].length);
+      items[k].forEach((it, i) => {
+        m.compose(v.set(it.x, it.y, it.z), q.setFromAxisAngle(up, it.ry), sc.set(it.sx, it.sy, it.sz));
+        im.setMatrixAt(i, m);
+      });
+      im.receiveShadow = k === 'island';
+      this.group.add(im);
+    }
   }
 
-  addClouds(center, radius, rnd) {
+  addClouds(area, count, rnd) {
     const mat = this.track(new THREE.MeshStandardMaterial({ color: this.t.cloud, flatShading: true, roughness: 1, emissive: '#ffffff', emissiveIntensity: 0.25 }));
     const geo = this.track(new THREE.IcosahedronGeometry(1, 0));
     const puffs = [];
-    for (let i = 0; i < 40; i++) {
-      const a = rnd() * Math.PI * 2;
-      const d = radius * (0.4 + rnd() * 1.8);
-      const cx = center.x + Math.cos(a) * d, cz = center.z + Math.sin(a) * d;
+    for (let i = 0, tries = 0; i < count && tries < count * 6; tries++) {
+      const cx = area.minX + rnd() * (area.maxX - area.minX);
+      const cz = area.minZ + rnd() * (area.maxZ - area.minZ);
       const cy = -40 + rnd() * 110;
+      // Wolken in Fahrbahnhöhe nur abseits der Strecke
+      if (cy > -15 && cy < 35 && !this.clear(cx, cz, 40)) continue;
+      i++;
       const n = 3 + Math.floor(rnd() * 4);
       for (let k = 0; k < n; k++) {
         const s = 5 + rnd() * 7;
@@ -152,6 +169,9 @@ export class Environment {
     this.sun.position.copy(focus).add(this.sunOffset);
     this.sun.target.position.copy(focus);
     this.sky.position.copy(focus);
+    // Meer wandert in groben Schritten mit (Raster bleibt ruhig)
+    this.sea.position.x = Math.round(focus.x / 50) * 50;
+    this.sea.position.z = Math.round(focus.z / 50) * 50;
   }
 
   dispose(scene) {

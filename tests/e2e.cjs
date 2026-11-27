@@ -26,7 +26,7 @@ const OUT = process.env.OUT || '.';
       const orig = g.respawn.bind(g);
       g.respawn = () => { respawns++; orig(); };
       const STEP = 1 / 120;
-      for (let s = 0; s < 120 * 180 && g.state === 'racing'; s++) {
+      for (let s = 0; s < 120 * 600 && g.state === 'racing'; s++) {
         g.step(STEP);
         for (const e of g.physics.events) { if (e.type === 'wall') wall++; if (e.type === 'land') land++; }
         maxSpeed = Math.max(maxSpeed, g.physics.speed);

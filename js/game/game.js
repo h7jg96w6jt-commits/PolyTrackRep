@@ -46,8 +46,13 @@ export class Game {
     return TRACKS[this.trackIndex];
   }
 
+  // Freigeschaltet, wenn die vorherige Strecke derselben Kategorie beendet wurde
   isUnlocked(i) {
-    return i === 0 || !!this.records.best(TRACKS[i - 1].id);
+    const kind = TRACKS[i].kind ?? 'sprint';
+    for (let k = i - 1; k >= 0; k--) {
+      if ((TRACKS[k].kind ?? 'sprint') === kind) return !!this.records.best(TRACKS[k].id);
+    }
+    return true;
   }
 
   loadTrack(index) {
@@ -97,6 +102,7 @@ export class Game {
     this.nextCp = 0;
     this.respawnPiece = this.track.start;
     this.splits = [];
+    this.progress = 0;
     for (const cp of this.track.checkpoints) this.track.setCheckpointPassed(cp, false);
     this.placeAtStart();
     this.ui.showPause(false);
@@ -138,13 +144,13 @@ export class Game {
       result,
       list: this.records.list(this.def.id),
       medals: this.def.medals,
-      hasNext: this.trackIndex + 1 < TRACKS.length,
+      hasNext: this.trackIndex + 1 < TRACKS.length && this.isUnlocked(this.trackIndex + 1),
     });
     this.lastResult = { time, ...result };
   }
 
   nextTrack() {
-    if (this.trackIndex + 1 < TRACKS.length) this.startRace(this.trackIndex + 1);
+    if (this.trackIndex + 1 < TRACKS.length && this.isUnlocked(this.trackIndex + 1)) this.startRace(this.trackIndex + 1);
   }
 
   // ---------- Simulation ----------
@@ -165,6 +171,7 @@ export class Game {
 
     if (this.state === 'racing') {
       this.steps++;
+      this.progress = this.autoDrive ? this.autopilot.path[this.autopilot.i].dist : this.autopilot.follow(car.pos);
       const cp = this.track.checkpoints[this.nextCp];
       if (cp && this.track.crossed(cp, car.pos)) this.passCheckpoint(cp);
       else if (!cp && this.track.crossed(this.track.finish, car.pos)) this.finish();
@@ -268,6 +275,8 @@ export class Game {
         cpTotal: this.track.checkpoints.length,
         speed: car.speed,
         maxSpeed: car.p.maxSpeed,
+        dist: this.progress ?? 0,
+        length: this.track.length,
       });
     }
     const ctl = this.ctl ?? { throttle: 0 };

@@ -25,7 +25,8 @@ Arcade-Zeitrennen im Browser: ein kleines Auto, schwebende Strecken über dem Me
 - Checkpoints in Reihenfolge durchfahren; Zwischenzeit wird mit der eigenen Bestzeit verglichen.
 - Wer von der Strecke fällt, startet am letzten Checkpoint neu (die Zeit läuft weiter).
 - Ziel: Ergebnis, Medaille (Gold/Silber/Bronze) und lokale Top-5-Bestenliste.
-- Strecken werden nacheinander freigeschaltet (vorherige Strecke beenden).
+- Zwei Kategorien: **Sprint** (5 Strecken, ~1 km) und **Langstrecke** (3 Strecken, ~10 km, Checkpoint alle ~500 m, Fortschritt in km im HUD).
+- Strecken werden pro Kategorie nacheinander freigeschaltet (vorherige Strecke beenden).
 
 ## Strecken bauen
 
@@ -45,6 +46,13 @@ Strecken stehen in `js/track/tracks.js` als Code. Neue Strecke = neuer Eintrag, 
 | `O` | Looping | 2 |
 
 Zahl = Wiederholung (`S3`). Optionen pro Strecke: `walls` (`all`/`curves`/`none`), `medals`, `theme` (Streckenfarben), `env` (Himmel, Meer, Licht).
+Lange Strecken erzeugt ein Generator (überlappungsfrei, mit Regeln wie Boost vor Looping und Auslauf nach Sprüngen):
+
+```
+node tools/generate-track.mjs <flow|stunt|storm> <seed> <meter>
+```
+Den ausgegebenen Code als neuen Eintrag mit `kind: 'long'` in `tracks.js` einfügen. Gespeichert wird der fertige Code, damit Bestzeiten auch bei Generator-Änderungen gültig bleiben.
+
 `node tests/validate-tracks.mjs` prüft Überlappungen, Ebenen, Start/Ziel, Checkpoints, Medaillen und Auslauf nach Sprüngen.
 
 ## Tests
@@ -68,7 +76,7 @@ js/vehicle/car-physics.js  Arcade-Physik mit 3D-Orientierung (Loopings), Drift, 
 js/vehicle/car-model.js  Low-Poly-Auto
 js/track/layout.js       Strecken-Code → Bausteine auf Gitter (ohne Three.js)
 js/track/geometry.js     Oberflächen je Bausteintyp
-js/track/track.js        Meshes, Raycasts (räumlicher Index), Checkpoints, Ideallinie
+js/track/track.js        Render-Blöcke (zusammengefasste Meshes), Kollision pro Baustein, Checkpoints, Ideallinie
 js/track/environment.js  Himmel, Meer, Inseln, Wolken, Licht
 js/track/tracks.js       Streckendaten
 js/input/input.js        Tastatur, Touch, Gamepad → einheitliche Steuerwerte
@@ -76,6 +84,7 @@ js/audio/audio.js        WebAudio: Motor, Reifen, Wind + Sound-Registry
 js/render/camera.js      Verfolgerkamera (FOV nach Tempo, Wackeln, Kollision)
 js/render/particles.js   Partikel (Drift, Boost, Landung, Funken)
 js/ui/ui.js              HUD, Countdown, Menü, Pause, Ziel
+tools/generate-track.mjs Generator für lange Strecken
 vendor/                  Three.js r160 (MIT)
 ```
 Details und Meilensteine: `docs/PLAN.md`.

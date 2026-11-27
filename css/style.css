@@ -47,7 +47,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
   -webkit-backdrop-filter: blur(6px);
 }
 .hud-time { top: calc(12px + var(--safe-top)); left: 16px; }
-.hud-cp { top: calc(12px + var(--safe-top)); left: 50%; transform: translateX(-50%); font-weight: 800; letter-spacing: 0.5px; }
+.hud-cp { top: calc(12px + var(--safe-top)); left: 50%; transform: translateX(-50%); font-weight: 800; letter-spacing: 0.5px; text-align: center; min-width: 150px; }
+.hud-cp .label { font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.dist-bar { height: 4px; margin-top: 5px; border-radius: 2px; background: rgba(255, 255, 255, 0.15); overflow: hidden; }
+.dist-bar div { height: 100%; width: 0; background: var(--good); }
 .hud-buttons { position: absolute; top: calc(12px + var(--safe-top)); right: 16px; display: flex; gap: 8px; pointer-events: auto; }
 .hud-speed { bottom: calc(16px + var(--safe-bottom)); left: 50%; transform: translateX(-50%); text-align: center; min-width: 120px; }
 .speed-num { font-size: 30px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
@@ -115,6 +118,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (pointer: coarse) { .keys { display: none; } }
 
 .track-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.track-list .kind { grid-column: 1 / -1; text-align: left; margin: 10px 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
 .track-card {
   text-align: left;
   border: 2px solid transparent;

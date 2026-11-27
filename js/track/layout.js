@@ -32,6 +32,13 @@ export const PIECES = {
   O: { type: 'loop', cells: [[0, 0], [0, -1]], exit: [0, -2], turn: 0, dLevel: 0, name: 'Looping' },
 };
 
+// Länge der Mittellinie je Baustein (m)
+export const PIECE_LEN = { B: 20, F: 20, S: 20, C: 20, T: 20, L: 15.7, R: 15.7, l: 47.1, r: 47.1, Q: 47.1, E: 47.1, U: 20.4, D: 20.4, J: 60, O: 96.5 };
+
+export function trackLength(code) {
+  return parseTrack(code).reduce((sum, t) => sum + PIECE_LEN[t], 0);
+}
+
 // Lokalen Gitter-Versatz in Weltrichtung drehen (gleiche Drehung wie die Meshes: -dir * 90°)
 export function rotateCell([x, z], dir) {
   const a = -dir * Math.PI / 2;

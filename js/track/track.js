@@ -8,6 +8,33 @@ const THICK = 1.2;
 const WALL_H = 1.1;
 const WALL_T = 0.5;
 export const SEA_LEVEL = -60;
+const CHUNK = 8; // Render-Block: 8×8 Zellen
+
+// Fügt nicht-indizierte Geometrien (position/normal/color) mit Weltmatrix zusammen
+function mergeTransformed(items) {
+  let count = 0;
+  for (const it of items) count += it.geo.attributes.position.count;
+  const pos = new Float32Array(count * 3), nor = new Float32Array(count * 3), col = new Float32Array(count * 3);
+  const v = new THREE.Vector3(), nm = new THREE.Matrix3();
+  let o = 0;
+  for (const { geo, matrix } of items) {
+    const P = geo.attributes.position, N = geo.attributes.normal, C = geo.attributes.color;
+    nm.getNormalMatrix(matrix);
+    for (let i = 0; i < P.count; i++, o += 3) {
+      v.fromBufferAttribute(P, i).applyMatrix4(matrix);
+      pos[o] = v.x; pos[o + 1] = v.y; pos[o + 2] = v.z;
+      v.fromBufferAttribute(N, i).applyMatrix3(nm).normalize();
+      nor[o] = v.x; nor[o + 1] = v.y; nor[o + 2] = v.z;
+      col[o] = C.getX(i); col[o + 1] = C.getY(i); col[o + 2] = C.getZ(i);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.computeBoundingSphere();
+  return g;
+}
 
 const DEFAULT_THEME = {
   road: '#3b4150', kerbA: '#ff5a3c', kerbB: '#f4f1ea', side: '#262a33',
@@ -120,36 +147,44 @@ export class Track {
     const wallMat = this.mat(new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.7, side: THREE.DoubleSide }));
     const pillarSpots = [];
     const wallMode = def.walls ?? 'curves';
+    const geoCache = new Map();   // gleiche Bausteine teilen sich ihre Geometrie
+    const chunks = new Map();     // Render-Blöcke: "bx,bz" -> { road: [], wall: [] }
+    this.geoCache = geoCache;
 
     for (const p of pieces) {
+      // Kollisions-Gruppe (nicht in der Szene; nur für Raycasts)
       const g = new THREE.Group();
       g.position.set(p.x * TILE, p.level * LEVEL_H, p.z * TILE);
       g.rotation.y = -p.dir * Math.PI / 2;
       g.updateMatrixWorld(true);
-      this.group.add(g);
       p.group = g;
       p.center = g.position.clone();
       p.forward = new THREE.Vector3(0, 0, -1).applyQuaternion(g.quaternion);
+
+      const bk = `${Math.floor(p.x / CHUNK)},${Math.floor(p.z / CHUNK)}`;
+      if (!chunks.has(bk)) chunks.set(bk, { road: [], wall: [] });
+      const chunk = chunks.get(bk);
 
       const strips = stripsFor(p.type);
       p.strips = strips;
       const meshes = { road: [], wall: [] };
       strips.forEach((strip, si) => {
         const wallsOn = wallMode === 'all' ? strip.walls : wallMode === 'curves' ? !!strip.curveWalls : false;
-        const geo = buildStrip(strip, this.theme, p.type, wallsOn);
+        const key = `${p.type}|${si}|${wallsOn}`;
+        if (!geoCache.has(key)) geoCache.set(key, buildStrip(strip, this.theme, p.type, wallsOn));
+        const geo = geoCache.get(key);
+
         const road = new THREE.Mesh(geo.road, roadMat);
-        road.castShadow = true;
-        road.receiveShadow = true;
         road.userData = { type: p.type, boost: p.type === 'boost', sticky: !!strip.sticky, piece: p.index };
         g.add(road);
         meshes.road.push(road);
+        chunk.road.push({ geo: geo.road, matrix: g.matrixWorld });
         if (geo.wall) {
           const wall = new THREE.Mesh(geo.wall, wallMat);
-          wall.castShadow = true;
-          wall.receiveShadow = true;
           wall.userData = { wall: true };
           g.add(wall);
           meshes.wall.push(wall);
+          chunk.wall.push({ geo: geo.wall, matrix: g.matrixWorld });
         }
 
         // Ideallinie (Mittellinie) in Weltkoordinaten
@@ -171,10 +206,10 @@ export class Track {
         for (const t of ts) {
           const f = frameAt(strip, t);
           if (f.up.y < 0.9) continue;
-          const w = f.p.clone().applyMatrix4(g.matrixWorld);
-          pillarSpots.push(w);
+          pillarSpots.push(f.p.clone().applyMatrix4(g.matrixWorld));
         }
       });
+      g.updateMatrixWorld(true);
 
       for (const [cx, cz] of p.cells) {
         const key = `${cx},${cz}`;
@@ -189,7 +224,9 @@ export class Track {
         const mat = this.mat(new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.6, emissive: color, emissiveIntensity: 0.15 }));
         const bar = p.type === 'finish' ? this.mat(new THREE.MeshStandardMaterial({ map: checkerTexture(), roughness: 0.6 })) : null;
         const arch = buildArch(mat, bar);
-        g.add(arch);
+        arch.position.copy(g.position);
+        arch.quaternion.copy(g.quaternion);
+        this.group.add(arch);
         p.arch = arch;
         p.archMat = mat;
         if (p.type === 'checkpoint') this.checkpoints.push(p);
@@ -197,6 +234,25 @@ export class Track {
         if (p.type === 'finish') this.finish = p;
       }
     }
+
+    // Sichtbare Fahrbahn: pro Block zu wenigen Meshes zusammengefasst (wenige Draw-Calls)
+    for (const chunk of chunks.values()) {
+      for (const [layer, material] of [['road', roadMat], ['wall', wallMat]]) {
+        if (!chunk[layer].length) continue;
+        const mesh = new THREE.Mesh(mergeTransformed(chunk[layer]), material);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        this.group.add(mesh);
+      }
+    }
+
+    // Kumulierte Distanz entlang der Ideallinie (Fortschritt, Länge)
+    let dist = 0;
+    this.path.forEach((pt, i) => {
+      if (i > 0) dist += pt.pos.distanceTo(this.path[i - 1].pos);
+      pt.dist = dist;
+    });
+    this.length = dist;
 
     this.addPillars(pillarSpots);
     this.group.updateMatrixWorld(true);
@@ -278,6 +334,10 @@ export class Track {
   dispose(scene) {
     scene.remove(this.group);
     this.group.traverse((o) => o.geometry?.dispose());
+    for (const g of this.geoCache.values()) {
+      g.road?.dispose();
+      g.wall?.dispose();
+    }
     for (const m of this.materials) {
       m.map?.dispose();
       m.dispose();

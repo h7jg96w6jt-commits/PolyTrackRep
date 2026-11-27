@@ -15,7 +15,7 @@ const assert = (c, msg) => { if (!c) { console.log('✗', msg); process.exitCode
   await page.reload({ waitUntil: 'networkidle' });
   const st = () => page.evaluate(() => window.__jg.game.state);
 
-  assert((await page.locator('.track-card:disabled').count()) === 4, 'Nur erste Strecke freigeschaltet');
+  assert((await page.locator('.track-card:disabled').count()) === 6, 'Nur je erste Strecke (Sprint + Langstrecke) freigeschaltet');
   await page.locator('.track-card').first().click();
   assert((await st()) === 'countdown', 'Klick startet Countdown');
   await page.waitForTimeout(600);
@@ -70,7 +70,7 @@ const assert = (c, msg) => { if (!c) { console.log('✗', msg); process.exitCode
   assert((await page.evaluate(() => window.__jg.game.def.id)) === 'wolkenbogen', 'Zweite Strecke geladen');
   await page.click('#hud .icon-btn[data-action=pause]');
   await page.click('#btn-menu');
-  assert((await page.locator('.track-card:disabled').count()) === 3, 'Zweite Strecke jetzt freigeschaltet');
+  assert((await page.locator('.track-card:disabled').count()) === 5, 'Zweite Strecke jetzt freigeschaltet');
   const best = await page.locator('.track-card').first().locator('.best').textContent();
   assert(/\d\d:\d\d\.\d{3}/.test(best), `Bestzeit im Menü (${best})`);
 
